@@ -12,32 +12,24 @@ module ALU(clk, A, B, seg, an);
     wire [3:0] cla_out, sub_out;
     wire [1:0] counter_out;
     wire [3:0] mux_out;
-    wire [15:0] hex_in; // 16-bit wire for your specific hex module
+    wire [15:0] hex_in; 
 
-    // 1. Arithmetic Units
     cla3bit cla_inst (.A(A), .B(B), .out(cla_out));
     sub3bit sub_inst (.A(A), .B(B), .out(sub_out));
 
-    // 2. Display Refresh Control
     counter2bit counter_inst (.clk(clk), .sel(counter_out));
     decoder_v2 dec_inst (.sel(counter_out), .an(an));
 
-    // 3. 4-to-1 Multiplexer (Table I Logic)
     mux_v2 mux_inst (
         .A(add_ones), .B(add_tens), 
         .C(sub_ones), .D(4'b0000), 
         .sel(counter_out), .out(mux_out)
     );
 
-    // 4. Interface for your specific hex_to_7seg module
-    // This converts the 4-bit mux_out into a 16-bit one-hot signal 
-    // so hex_to_7seg detects exactly one "sw" bit high.
     assign hex_in = (16'b1 << mux_out); 
 
-    // 5. New 7-Segment Module
     hex_to_7seg h2s_inst (.sw(hex_in), .seg(seg));
 
-    // 6. Addition Logic (Binary to BCD)
     always @(posedge clk) begin
         if (cla_out > 9) begin
             add_ones <= cla_out - 10;
@@ -48,7 +40,6 @@ module ALU(clk, A, B, seg, an);
         end
     end
 
-    // 7. Subtraction Logic
     always @(posedge clk) begin
         if (B > A) sub_ones <= 4'b0000; 
         else sub_ones <= sub_out[2:0];
